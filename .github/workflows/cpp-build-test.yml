@@ -105,7 +105,7 @@ jobs:
           if [ -n "$FULL_PROFILE_PATH" ] && [ -f "$FULL_PROFILE_PATH" ]; then
             # Use absolute path to ensure conan finds it regardless of working directory
             ABS_PROFILE_PATH="${GITHUB_WORKSPACE}/${FULL_PROFILE_PATH}"
-            echo "profile_arg=-pr:h ${ABS_PROFILE_PATH} -pr:b ${ABS_PROFILE_PATH}" >> $GITHUB_OUTPUT
+            echo "profile_arg=-pr:h \"${RELATIVE_PROFILE_PATH}\" -pr:b \"${RELATIVE_PROFILE_PATH}\"" >> $GITHUB_OUTPUT
             echo "Using custom profile: $ABS_PROFILE_PATH"
           else
             echo "profile_arg=" >> $GITHUB_OUTPUT
