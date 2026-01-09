@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: 'cpp,hpp,c,h'
+      exclude-dirs:
+        description: 'Comma-separated list of directory names to exclude (e.g., build,vendor,third_party)'
+        required: false
+        type: string
+        default: 'build,CMakeFiles'
 
 jobs:
   clang-format-check:
@@ -50,6 +55,16 @@ jobs:
           # Convert comma-separated extensions to find patterns
           EXTENSIONS="${{ inputs.file-extensions }}"
           SOURCE_DIR="${{ inputs.source-dir }}"
+          EXCLUDE_DIRS="${{ inputs.exclude-dirs }}"
+
+          # Build exclusion patterns for find command
+          EXCLUDE_ARGS=""
+          if [ -n "$EXCLUDE_DIRS" ]; then
+            IFS=',' read -ra EXCLUDE_ARRAY <<< "$EXCLUDE_DIRS"
+            for dir in "${EXCLUDE_ARRAY[@]}"; do
+              EXCLUDE_ARGS="$EXCLUDE_ARGS -path \"*/${dir}/*\" -prune -o"
+            done
+          fi
 
           # Build find command with multiple -name patterns
           FIND_ARGS=""
@@ -63,8 +78,8 @@ jobs:
             fi
           done
 
-          # Find all matching files
-          FILES=$(eval "find \"$SOURCE_DIR\" -type f \( $FIND_ARGS \)" 2>/dev/null | sort)
+          # Find all matching files, excluding specified directories
+          FILES=$(eval "find \"$SOURCE_DIR\" $EXCLUDE_ARGS -type f \( $FIND_ARGS \) -print" 2>/dev/null | sort)
 
           if [ -z "$FILES" ]; then
             echo "No C++ files found matching extensions: $EXTENSIONS in directory: $SOURCE_DIR"
