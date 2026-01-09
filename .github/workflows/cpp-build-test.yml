@@ -129,8 +129,7 @@ jobs:
             --build=missing \
             --lockfile=${{ inputs.lockfile-path }} \
             ${{ steps.profile.outputs.profile_arg }} \
-            ${{ inputs.conan-options }} \
-            -of build
+            ${{ inputs.conan-options }}
 
       - name: Install dependencies (without lockfile)
         if: ${{ !inputs.use-lockfile }}
@@ -140,8 +139,7 @@ jobs:
           conan install . \
             --build=missing \
             ${{ steps.profile.outputs.profile_arg }} \
-            ${{ inputs.conan-options }} \
-            -of build
+            ${{ inputs.conan-options }}
 
       - name: Configure CMake (Unix)
         if: runner.os != 'Windows'
