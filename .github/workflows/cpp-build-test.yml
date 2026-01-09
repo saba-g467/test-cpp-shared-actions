@@ -103,9 +103,10 @@ jobs:
 
           # Check if custom profile exists
           if [ -n "$FULL_PROFILE_PATH" ] && [ -f "$FULL_PROFILE_PATH" ]; then
-            # Use path relative to source-dir to avoid OS-specific path issues.
-            echo "profile_arg=-pr:h ${RELATIVE_PROFILE_PATH} -pr:b ${RELATIVE_PROFILE_PATH}" >> $GITHUB_OUTPUT
-            echo "Using custom profile: $RELATIVE_PROFILE_PATH"
+            # Use absolute path to ensure conan finds it regardless of working directory
+            ABS_PROFILE_PATH="${GITHUB_WORKSPACE}/${FULL_PROFILE_PATH}"
+            echo "profile_arg=-pr:h ${ABS_PROFILE_PATH} -pr:b ${ABS_PROFILE_PATH}" >> $GITHUB_OUTPUT
+            echo "Using custom profile: $ABS_PROFILE_PATH"
           else
             echo "profile_arg=" >> $GITHUB_OUTPUT
             echo "Using default detected profile"
@@ -162,81 +163,17 @@ jobs:
         run: |
           cmake --preset conan-default 2>$null
           if ($LASTEXITCODE -ne 0) { cmake --preset conan-release 2>$null }
-          if ($LASTEXITCODE -ne 0) {
-            $toolchainFile = "build/generators/conan_toolchain.cmake"
-            if (-not (Test-Path $toolchainFile) -and (Test-Path "build/Release/generators/conan_toolchain.cmake")) {
-              $toolchainFile = "build/Release/generators/conan_toolchain.cmake"
-            }
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$toolchainFile
-          }
+          if ($LASTEXITCODE -ne 0) { cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/generators/conan_toolchain.cmake }
 
-      - name: Build (Unix)
-        if: runner.os != 'Windows'
+      - name: Build
         working-directory: ${{ inputs.source-dir }}
         run: |
-          if cmake --build --preset conan-release --parallel; then
-            exit 0
-          fi
-          BUILD_DIR="build"
-          if [ -f "build/Release/CMakeCache.txt" ]; then
-            BUILD_DIR="build/Release"
-          fi
-          if [ ! -f "${BUILD_DIR}/CMakeCache.txt" ]; then
-            echo "::error::CMake cache not found in ${BUILD_DIR}. Configure step may have failed."
-            exit 1
-          fi
-          cmake --build "${BUILD_DIR}" --config Release --parallel
+          cmake --build --preset conan-release --parallel || cmake --build build --config Release --parallel
 
-      - name: Build (Windows)
-        if: runner.os == 'Windows'
+      - name: Run tests
         working-directory: ${{ inputs.source-dir }}
         run: |
-          cmake --build --preset conan-release --parallel
-          if ($LASTEXITCODE -ne 0) {
-            $buildDir = "build"
-            if (Test-Path "build/Release/CMakeCache.txt") {
-              $buildDir = "build/Release"
-            }
-            if (-not (Test-Path "$buildDir/CMakeCache.txt")) {
-              Write-Error "CMake cache not found in $buildDir. Configure step may have failed."
-              exit 1
-            }
-            cmake --build $buildDir --config Release --parallel
-          }
-
-      - name: Run tests (Unix)
-        if: runner.os != 'Windows'
-        working-directory: ${{ inputs.source-dir }}
-        run: |
-          if ctest --preset conan-release --output-on-failure --parallel; then
-            exit 0
-          fi
-          BUILD_DIR="build"
-          if [ -f "build/Release/CMakeCache.txt" ]; then
-            BUILD_DIR="build/Release"
-          fi
-          if [ ! -f "${BUILD_DIR}/CMakeCache.txt" ]; then
-            echo "::error::CMake cache not found in ${BUILD_DIR}. Configure step may have failed."
-            exit 1
-          fi
-          ctest --test-dir "${BUILD_DIR}" --build-config Release --output-on-failure --parallel
-
-      - name: Run tests (Windows)
-        if: runner.os == 'Windows'
-        working-directory: ${{ inputs.source-dir }}
-        run: |
-          ctest --preset conan-release --output-on-failure --parallel
-          if ($LASTEXITCODE -ne 0) {
-            $buildDir = "build"
-            if (Test-Path "build/Release/CMakeCache.txt") {
-              $buildDir = "build/Release"
-            }
-            if (-not (Test-Path "$buildDir/CMakeCache.txt")) {
-              Write-Error "CMake cache not found in $buildDir. Configure step may have failed."
-              exit 1
-            }
-            ctest --test-dir $buildDir --build-config Release --output-on-failure --parallel
-          }
+          ctest --preset conan-release --output-on-failure --parallel || ctest --test-dir build --build-config Release --output-on-failure --parallel
 
       - name: Upload test results
         if: always()
