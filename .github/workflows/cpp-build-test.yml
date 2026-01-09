@@ -145,7 +145,17 @@ jobs:
         if: runner.os != 'Windows'
         working-directory: ${{ inputs.source-dir }}
         run: |
-          cmake --preset conan-release || cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/generators/conan_toolchain.cmake
+          cmake --preset conan-release 2>/dev/null || cmake --preset conan-default 2>/dev/null || {
+            TOOLCHAIN_FILE="build/generators/conan_toolchain.cmake"
+            if [ ! -f "$TOOLCHAIN_FILE" ] && [ -f "build/Release/generators/conan_toolchain.cmake" ]; then
+              TOOLCHAIN_FILE="build/Release/generators/conan_toolchain.cmake"
+            fi
+            if [ -z "$TOOLCHAIN_FILE" ] || [ ! -f "$TOOLCHAIN_FILE" ]; then
+              echo "::error::No conan toolchain file found. Conan install may have failed."
+              exit 1
+            fi
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}"
+          }
 
       - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
