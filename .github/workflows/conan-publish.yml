@@ -127,8 +127,10 @@ jobs:
           RELATIVE_PROFILE_PATH="${{ inputs.profile-dir }}/${{ matrix.conan-profile }}"
 
           if [ -f "${FULL_PROFILE_PATH}" ]; then
-            echo "Using custom profile: ${FULL_PROFILE_PATH}"
-            echo "CONAN_PROFILE=${RELATIVE_PROFILE_PATH}" >> $GITHUB_ENV
+            # Use absolute path to ensure conan finds it regardless of working directory
+            ABS_PROFILE_PATH="${GITHUB_WORKSPACE}/${FULL_PROFILE_PATH}"
+            echo "Using custom profile: ${ABS_PROFILE_PATH}"
+            echo "CONAN_PROFILE=${ABS_PROFILE_PATH}" >> $GITHUB_ENV
           else
             echo "Custom profile not found at ${FULL_PROFILE_PATH}, using default"
             echo "CONAN_PROFILE=" >> $GITHUB_ENV
