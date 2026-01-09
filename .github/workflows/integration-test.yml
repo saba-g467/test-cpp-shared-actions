@@ -90,7 +90,15 @@ jobs:
         working-directory: ${{ inputs.consumer-dir }}
         run: |
           # Use absolute path for profile since we're in consumer-dir, not library-dir
-          PROFILE_PATH="${GITHUB_WORKSPACE}/${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
+          WORKSPACE_PATH="${GITHUB_WORKSPACE}"
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            if command -v cygpath >/dev/null 2>&1; then
+              WORKSPACE_PATH="$(cygpath -m "${GITHUB_WORKSPACE}")"
+            else
+              WORKSPACE_PATH="$(printf '%s' "${GITHUB_WORKSPACE}" | sed 's|\\\\|/|g')"
+            fi
+          fi
+          PROFILE_PATH="${WORKSPACE_PATH}/${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
 
           # Update conanfile.py to use the correct version
           # This handles the dynamic version requirement
@@ -105,7 +113,15 @@ jobs:
         working-directory: ${{ inputs.consumer-dir }}
         run: |
           # Use absolute path for profile since we're in consumer-dir, not library-dir
-          PROFILE_PATH="${GITHUB_WORKSPACE}/${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
+          WORKSPACE_PATH="${GITHUB_WORKSPACE}"
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            if command -v cygpath >/dev/null 2>&1; then
+              WORKSPACE_PATH="$(cygpath -m "${GITHUB_WORKSPACE}")"
+            else
+              WORKSPACE_PATH="$(printf '%s' "${GITHUB_WORKSPACE}" | sed 's|\\\\|/|g')"
+            fi
+          fi
+          PROFILE_PATH="${WORKSPACE_PATH}/${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
 
           conan build . \
             --profile:build="${PROFILE_PATH}" \
