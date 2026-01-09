@@ -91,17 +91,20 @@ jobs:
           PROFILE_NAME="${{ matrix.profile }}"
           SOURCE_DIR="${{ inputs.source-dir }}"
 
-          # Construct the profile path
+          # Construct the full path for existence check (from repo root)
           if [ -n "$PROFILE_DIR" ]; then
-            PROFILE_PATH="${SOURCE_DIR}/${PROFILE_DIR}/${PROFILE_NAME}"
+            FULL_PROFILE_PATH="${SOURCE_DIR}/${PROFILE_DIR}/${PROFILE_NAME}"
+            # Relative path for conan (since conan runs with working-directory=source-dir)
+            RELATIVE_PROFILE_PATH="${PROFILE_DIR}/${PROFILE_NAME}"
           else
-            PROFILE_PATH=""
+            FULL_PROFILE_PATH=""
+            RELATIVE_PROFILE_PATH=""
           fi
 
           # Check if custom profile exists
-          if [ -n "$PROFILE_PATH" ] && [ -f "$PROFILE_PATH" ]; then
-            echo "profile_arg=-pr:h ${PROFILE_PATH} -pr:b ${PROFILE_PATH}" >> $GITHUB_OUTPUT
-            echo "Using custom profile: $PROFILE_PATH"
+          if [ -n "$FULL_PROFILE_PATH" ] && [ -f "$FULL_PROFILE_PATH" ]; then
+            echo "profile_arg=-pr:h ${RELATIVE_PROFILE_PATH} -pr:b ${RELATIVE_PROFILE_PATH}" >> $GITHUB_OUTPUT
+            echo "Using custom profile: $FULL_PROFILE_PATH"
           else
             echo "profile_arg=" >> $GITHUB_OUTPUT
             echo "Using default detected profile"

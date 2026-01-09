@@ -121,12 +121,16 @@ jobs:
         if: inputs.profile-dir != ''
         shell: bash
         run: |
-          PROFILE_PATH="${{ inputs.profile-dir }}/${{ matrix.conan-profile }}"
-          if [ -f "${PROFILE_PATH}" ]; then
-            echo "Using custom profile: ${PROFILE_PATH}"
-            echo "CONAN_PROFILE=${PROFILE_PATH}" >> $GITHUB_ENV
+          # Full path for existence check (from repo root)
+          FULL_PROFILE_PATH="${{ inputs.source-dir }}/${{ inputs.profile-dir }}/${{ matrix.conan-profile }}"
+          # Relative path for conan (since conan runs with working-directory=source-dir)
+          RELATIVE_PROFILE_PATH="${{ inputs.profile-dir }}/${{ matrix.conan-profile }}"
+
+          if [ -f "${FULL_PROFILE_PATH}" ]; then
+            echo "Using custom profile: ${FULL_PROFILE_PATH}"
+            echo "CONAN_PROFILE=${RELATIVE_PROFILE_PATH}" >> $GITHUB_ENV
           else
-            echo "Custom profile not found at ${PROFILE_PATH}, using default"
+            echo "Custom profile not found at ${FULL_PROFILE_PATH}, using default"
             echo "CONAN_PROFILE=" >> $GITHUB_ENV
           fi
 

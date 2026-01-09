@@ -89,7 +89,8 @@ jobs:
         shell: bash
         working-directory: ${{ inputs.consumer-dir }}
         run: |
-          PROFILE_PATH="${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
+          # Use absolute path for profile since we're in consumer-dir, not library-dir
+          PROFILE_PATH="${GITHUB_WORKSPACE}/${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
 
           # Update conanfile.py to use the correct version
           # This handles the dynamic version requirement
@@ -103,7 +104,8 @@ jobs:
         shell: bash
         working-directory: ${{ inputs.consumer-dir }}
         run: |
-          PROFILE_PATH="${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
+          # Use absolute path for profile since we're in consumer-dir, not library-dir
+          PROFILE_PATH="${GITHUB_WORKSPACE}/${{ inputs.library-dir }}/${{ inputs.profile-dir }}/${{ matrix.profile }}"
 
           conan build . \
             --profile:build="${PROFILE_PATH}" \
