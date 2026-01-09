@@ -40,13 +40,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            profile: linux
+            profile: linux-gcc
             shell: bash
           - os: windows-latest
-            profile: windows
+            profile: windows-msvc
             shell: pwsh
           - os: macos-latest
-            profile: macos
+            profile: macos-clang
             shell: bash
 
     runs-on: ${{ matrix.os }}
@@ -72,9 +72,13 @@ jobs:
           conan profile detect --force
 
       - name: Setup GitHub Package Registry (if token provided)
-        if: ${{ secrets.github-token != '' }}
+        shell: bash
         run: |
-          conan remote add github https://conan.pkg.github.com/${{ github.repository_owner }} --force || true
+          if [ -n "$CONAN_PASSWORD" ]; then
+            conan remote add github "https://conan.pkg.github.com/${{ github.repository_owner }}" --force || true
+          else
+            echo "No GitHub token provided, skipping GitHub Package Registry setup"
+          fi
         env:
           CONAN_LOGIN_USERNAME: ${{ github.actor }}
           CONAN_PASSWORD: ${{ secrets.github-token }}
