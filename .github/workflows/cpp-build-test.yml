@@ -120,8 +120,8 @@ jobs:
           restore-keys: |
             conan-${{ matrix.os }}-
 
-      - name: Install dependencies (with lockfile)
-        if: ${{ inputs.use-lockfile }}
+      - name: Install dependencies (with lockfile) - Unix
+        if: ${{ inputs.use-lockfile && runner.os != 'Windows' }}
         shell: bash
         working-directory: ${{ inputs.source-dir }}
         run: |
@@ -131,14 +131,35 @@ jobs:
             ${{ steps.profile.outputs.profile_arg }} \
             ${{ inputs.conan-options }}
 
-      - name: Install dependencies (without lockfile)
-        if: ${{ !inputs.use-lockfile }}
+      - name: Install dependencies (with lockfile) - Windows
+        if: ${{ inputs.use-lockfile && runner.os == 'Windows' }}
+        shell: pwsh
+        working-directory: ${{ inputs.source-dir }}
+        run: |
+          conan install . `
+            --build=missing `
+            --lockfile=${{ inputs.lockfile-path }} `
+            ${{ steps.profile.outputs.profile_arg }} `
+            ${{ inputs.conan-options }}
+
+      - name: Install dependencies (without lockfile) - Unix
+        if: ${{ !inputs.use-lockfile && runner.os != 'Windows' }}
         shell: bash
         working-directory: ${{ inputs.source-dir }}
         run: |
           conan install . \
             --build=missing \
             ${{ steps.profile.outputs.profile_arg }} \
+            ${{ inputs.conan-options }}
+
+      - name: Install dependencies (without lockfile) - Windows
+        if: ${{ !inputs.use-lockfile && runner.os == 'Windows' }}
+        shell: pwsh
+        working-directory: ${{ inputs.source-dir }}
+        run: |
+          conan install . `
+            --build=missing `
+            ${{ steps.profile.outputs.profile_arg }} `
             ${{ inputs.conan-options }}
 
       - name: Configure CMake (Unix)
