@@ -48,13 +48,13 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            conan-profile: linux-release
+            conan-profile: linux-gcc
           - os: windows-latest
             platform: windows
-            conan-profile: windows-release
+            conan-profile: windows-msvc
           - os: macos-latest
             platform: macos
-            conan-profile: macos-release
+            conan-profile: macos-clang
 
     runs-on: ${{ matrix.os }}
     name: Build (${{ matrix.platform }})
